@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Heart, LogOut, Send, Users } from "lucide-react";
+import { Heart, LogOut, Send, Users, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -119,11 +119,106 @@ function formatTime(ts: bigint) {
   });
 }
 
+function MemberList({
+  currentMember,
+  onSwitch,
+  onClose,
+}: {
+  currentMember: FamilyMember;
+  onSwitch: () => void;
+  onClose?: () => void;
+}) {
+  const members = Object.entries(MEMBER_CONFIG) as [
+    FamilyMember,
+    (typeof MEMBER_CONFIG)[FamilyMember],
+  ][];
+  return (
+    <>
+      <div className="p-5 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm text-foreground">
+            Family Members
+          </span>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            data-ocid="drawer.close_button"
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-black/10 transition-colors"
+            aria-label="Close drawer"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 p-3 flex flex-col gap-2 overflow-y-auto">
+        {members.map(([key, config]) => {
+          const isCurrentUser = key === currentMember;
+          return (
+            <div
+              key={key}
+              data-ocid={`sidebar.${key}.item`}
+              className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                isCurrentUser
+                  ? "bg-white shadow-xs border border-border"
+                  : "hover:bg-white/50"
+              }`}
+            >
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                style={{
+                  background: config.color,
+                  color: config.textColor,
+                }}
+              >
+                {config.initials}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground truncate">
+                  {config.name}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {config.role}
+                </div>
+                {isCurrentUser && (
+                  <div
+                    className="text-xs mt-0.5"
+                    style={{ color: "oklch(0.52 0.09 185)" }}
+                  >
+                    You
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="p-4 border-t border-border">
+        <Button
+          data-ocid="sidebar.switch_member.button"
+          variant="outline"
+          size="sm"
+          className="w-full gap-2 rounded-xl"
+          onClick={onSwitch}
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Switch Member
+        </Button>
+      </div>
+    </>
+  );
+}
+
 function ChatApp({
   currentMember,
   onSwitch,
 }: { currentMember: FamilyMember; onSwitch: () => void }) {
   const [text, setText] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { data: messages = [], isLoading } = useGetAllMessages();
   const sendMessage = useSendMessage();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -159,22 +254,58 @@ function ChatApp({
   };
 
   const currentConfig = MEMBER_CONFIG[currentMember];
-  const members = Object.entries(MEMBER_CONFIG) as [
-    FamilyMember,
-    (typeof MEMBER_CONFIG)[FamilyMember],
-  ][];
 
   return (
-    /* On mobile: full screen, no padding. On md+: centered with padding */
     <div
       className="flex items-center justify-center md:p-4"
       style={{ height: "100dvh" }}
     >
+      {/* Mobile slide-out drawer */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              key="drawer-overlay"
+              data-ocid="drawer.modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 md:hidden"
+              style={{ zIndex: 50 }}
+              onClick={() => setDrawerOpen(false)}
+            />
+            {/* Drawer panel */}
+            <motion.div
+              key="drawer-panel"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 left-0 bottom-0 w-[280px] bg-card flex flex-col border-r border-border md:hidden"
+              style={{
+                zIndex: 60,
+                paddingTop: "env(safe-area-inset-top)",
+              }}
+            >
+              <MemberList
+                currentMember={currentMember}
+                onSwitch={() => {
+                  setDrawerOpen(false);
+                  onSwitch();
+                }}
+                onClose={() => setDrawerOpen(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
-        /* Mobile: full screen, no rounding. md+: card with rounded corners & max size */
         className="w-full bg-card border-border overflow-hidden flex
           h-full
           rounded-none border-0 shadow-none
@@ -186,70 +317,7 @@ function ChatApp({
           className="hidden md:flex w-56 flex-shrink-0 flex-col border-r border-border"
           style={{ background: "oklch(0.96 0.01 145)" }}
         >
-          <div className="p-5 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              <span className="font-semibold text-sm text-foreground">
-                Family Members
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1 p-3 flex flex-col gap-2 overflow-y-auto">
-            {members.map(([key, config]) => {
-              const isCurrentUser = key === currentMember;
-              return (
-                <div
-                  key={key}
-                  data-ocid={`sidebar.${key}.item`}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    isCurrentUser
-                      ? "bg-white shadow-xs border border-border"
-                      : "hover:bg-white/50"
-                  }`}
-                >
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{
-                      background: config.color,
-                      color: config.textColor,
-                    }}
-                  >
-                    {config.initials}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-foreground truncate">
-                      {config.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {config.role}
-                    </div>
-                    {isCurrentUser && (
-                      <div
-                        className="text-xs mt-0.5"
-                        style={{ color: "oklch(0.52 0.09 185)" }}
-                      >
-                        You
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="p-4 border-t border-border">
-            <Button
-              data-ocid="sidebar.switch_member.button"
-              variant="outline"
-              size="sm"
-              className="w-full gap-2 rounded-xl"
-              onClick={onSwitch}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Switch Member
-            </Button>
-          </div>
+          <MemberList currentMember={currentMember} onSwitch={onSwitch} />
         </aside>
 
         {/* Chat panel */}
@@ -263,6 +331,18 @@ function ChatApp({
             }}
           >
             <div className="flex items-center gap-3">
+              {/* Members drawer toggle — mobile only */}
+              <Button
+                data-ocid="drawer.open_modal_button"
+                variant="ghost"
+                size="sm"
+                className="md:hidden rounded-xl min-h-[44px] min-w-[44px] px-2"
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Show family members"
+              >
+                <Users className="w-5 h-5" />
+              </Button>
+
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                 style={{
@@ -282,7 +362,7 @@ function ChatApp({
               </div>
               {/* Switch member button on mobile */}
               <Button
-                data-ocid="sidebar.switch_member.button"
+                data-ocid="chat.switch.button"
                 variant="ghost"
                 size="sm"
                 className="md:hidden gap-1.5 rounded-xl min-h-[44px] px-3"
@@ -294,7 +374,7 @@ function ChatApp({
             </div>
           </header>
 
-          {/* Messages — flex-1 + overflow-y-auto for proper mobile scroll */}
+          {/* Messages */}
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto px-4 py-4"
@@ -484,7 +564,7 @@ function AppInner() {
         )}
       </AnimatePresence>
 
-      {/* Footer — desktop only, hidden on mobile to avoid overlay */}
+      {/* Footer — desktop only */}
       <footer className="hidden md:block fixed bottom-0 left-0 right-0 py-2 text-center pointer-events-none">
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()}. Built with{" "}
