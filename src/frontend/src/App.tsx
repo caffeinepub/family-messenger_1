@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Heart, LogOut, Send, Users } from "lucide-react";
@@ -55,7 +54,10 @@ function MemberSelectScreen({
     (typeof MEMBER_CONFIG)[FamilyMember],
   ][];
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+    <div
+      className="flex flex-col items-center justify-center p-6"
+      style={{ minHeight: "100dvh" }}
+    >
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,6 +90,7 @@ function MemberSelectScreen({
             whileTap={{ scale: 0.97 }}
             onClick={() => onSelect(key)}
             className="bg-card rounded-2xl shadow-card border border-border p-7 flex flex-col items-center gap-4 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            style={{ minHeight: "44px" }}
           >
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shadow-md"
@@ -124,6 +127,7 @@ function ChatApp({
   const { data: messages = [], isLoading } = useGetAllMessages();
   const sendMessage = useSendMessage();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
 
   useEffect(() => {
@@ -161,18 +165,25 @@ function ChatApp({
   ][];
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      {/* Main app card */}
+    /* On mobile: full screen, no padding. On md+: centered with padding */
+    <div
+      className="flex items-center justify-center md:p-4"
+      style={{ height: "100dvh" }}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-4xl bg-card rounded-3xl shadow-card border border-border overflow-hidden flex"
-        style={{ height: "calc(100vh - 2rem)", maxHeight: "680px" }}
+        /* Mobile: full screen, no rounding. md+: card with rounded corners & max size */
+        className="w-full bg-card border-border overflow-hidden flex
+          h-full
+          rounded-none border-0 shadow-none
+          md:rounded-3xl md:border md:shadow-card md:max-w-4xl md:h-auto"
+        style={{ maxHeight: "calc(100dvh - 2rem)" }}
       >
-        {/* Left sidebar */}
+        {/* Left sidebar — hidden on mobile */}
         <aside
-          className="w-56 flex-shrink-0 flex flex-col border-r border-border"
+          className="hidden md:flex w-56 flex-shrink-0 flex-col border-r border-border"
           style={{ background: "oklch(0.96 0.01 145)" }}
         >
           <div className="p-5 border-b border-border">
@@ -242,12 +253,18 @@ function ChatApp({
         </aside>
 
         {/* Chat panel */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-full">
           {/* Header */}
-          <header className="px-6 py-4 border-b border-border bg-card">
+          <header
+            className="px-4 md:px-6 border-b border-border bg-card flex-shrink-0"
+            style={{
+              paddingTop: "max(1rem, env(safe-area-inset-top))",
+              paddingBottom: "1rem",
+            }}
+          >
             <div className="flex items-center gap-3">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
                 style={{
                   background: currentConfig.color,
                   color: currentConfig.textColor,
@@ -255,7 +272,7 @@ function ChatApp({
               >
                 {currentConfig.initials}
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h2 className="font-bold text-foreground text-base">
                   Family Chat
                 </h2>
@@ -263,11 +280,26 @@ function ChatApp({
                   Marina, Nik &amp; Mariana
                 </p>
               </div>
+              {/* Switch member button on mobile */}
+              <Button
+                data-ocid="sidebar.switch_member.button"
+                variant="ghost"
+                size="sm"
+                className="md:hidden gap-1.5 rounded-xl min-h-[44px] px-3"
+                onClick={onSwitch}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-xs">Switch</span>
+              </Button>
             </div>
           </header>
 
-          {/* Messages */}
-          <ScrollArea className="flex-1 px-4 py-4">
+          {/* Messages — flex-1 + overflow-y-auto for proper mobile scroll */}
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto px-4 py-4"
+            style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+          >
             {isLoading && (
               <div
                 data-ocid="chat.loading_state"
@@ -315,7 +347,9 @@ function ChatApp({
                         </div>
                       )}
                       <div
-                        className={`flex flex-col max-w-[68%] ${isOwn ? "items-end" : "items-start"}`}
+                        className={`flex flex-col max-w-[75%] md:max-w-[68%] ${
+                          isOwn ? "items-end" : "items-start"
+                        }`}
                       >
                         {!isOwn && (
                           <span className="text-xs text-muted-foreground mb-1 ml-1">
@@ -323,7 +357,7 @@ function ChatApp({
                           </span>
                         )}
                         <div
-                          className="px-4 py-2 rounded-2xl text-sm leading-relaxed shadow-xs"
+                          className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs"
                           style={{
                             background: cfg.color,
                             color: cfg.textColor,
@@ -354,10 +388,16 @@ function ChatApp({
               </AnimatePresence>
             </div>
             <div ref={bottomRef} />
-          </ScrollArea>
+          </div>
 
           {/* Composer */}
-          <div className="px-4 py-4 border-t border-border bg-card">
+          <div
+            className="px-4 border-t border-border bg-card flex-shrink-0"
+            style={{
+              paddingTop: "0.75rem",
+              paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+            }}
+          >
             <form
               data-ocid="chat.composer.panel"
               onSubmit={(e) => {
@@ -372,14 +412,14 @@ function ChatApp({
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message…"
-                className="flex-1 rounded-xl border-border bg-secondary text-sm"
+                className="flex-1 rounded-xl border-border bg-secondary text-[16px] min-h-[44px]"
                 autoComplete="off"
               />
               <Button
                 data-ocid="chat.submit_button"
                 type="submit"
                 disabled={!text.trim() || sendMessage.isPending}
-                className="rounded-xl px-4 gap-1.5"
+                className="rounded-xl px-4 gap-1.5 min-h-[44px] min-w-[44px]"
                 style={{ background: "oklch(0.52 0.09 185)", color: "#fff" }}
               >
                 <Send className="w-4 h-4" />
@@ -418,7 +458,7 @@ function AppInner() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "oklch(0.93 0.02 75)" }}>
+    <div style={{ background: "oklch(0.93 0.02 75)", minHeight: "100dvh" }}>
       <AnimatePresence mode="wait">
         {!currentMember ? (
           <motion.div
@@ -437,14 +477,15 @@ function AppInner() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            style={{ height: "100dvh" }}
           >
             <ChatApp currentMember={currentMember} onSwitch={handleSwitch} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 py-2 text-center">
+      {/* Footer — desktop only, hidden on mobile to avoid overlay */}
+      <footer className="hidden md:block fixed bottom-0 left-0 right-0 py-2 text-center pointer-events-none">
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()}. Built with{" "}
           <Heart
@@ -456,7 +497,7 @@ function AppInner() {
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-primary"
+            className="underline hover:text-primary pointer-events-auto"
           >
             caffeine.ai
           </a>
