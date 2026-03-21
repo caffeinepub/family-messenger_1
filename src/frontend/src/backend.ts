@@ -93,9 +93,7 @@ export interface Message {
     id: bigint;
     content: string;
     sender: FamilyMember;
-    timestamp: Time;
 }
-export type Time = bigint;
 export interface MessageInput {
     content: string;
     sender: FamilyMember;
@@ -125,7 +123,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     sendMessage(messageInput: MessageInput): Promise<void>;
 }
-import type { FamilyMember as _FamilyMember, Message as _Message, MessageInput as _MessageInput, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { FamilyMember as _FamilyMember, Message as _Message, MessageInput as _MessageInput, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -289,18 +287,15 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
     id: bigint;
     content: string;
     sender: _FamilyMember;
-    timestamp: _Time;
 }): {
     id: bigint;
     content: string;
     sender: FamilyMember;
-    timestamp: Time;
 } {
     return {
         id: value.id,
         content: value.content,
-        sender: from_candid_FamilyMember_n6(_uploadFile, _downloadFile, value.sender),
-        timestamp: value.timestamp
+        sender: from_candid_FamilyMember_n6(_uploadFile, _downloadFile, value.sender)
     };
 }
 function from_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

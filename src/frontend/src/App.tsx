@@ -111,7 +111,8 @@ function MemberSelectScreen({
   );
 }
 
-function formatTime(ts: bigint) {
+function formatTime(ts: bigint | undefined) {
+  if (ts === undefined) return "";
   const ms = Number(ts / 1_000_000n);
   return new Date(ms).toLocaleTimeString([], {
     hour: "2-digit",
@@ -448,7 +449,7 @@ function ChatApp({
                           {msg.content}
                         </div>
                         <span className="text-xs text-muted-foreground mt-1 mx-1">
-                          {formatTime(msg.timestamp)}
+                          {formatTime((msg as any).timestamp)}
                         </span>
                       </div>
                       {isOwn && (

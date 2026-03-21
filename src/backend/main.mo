@@ -1,30 +1,26 @@
-import Array "mo:core/Array";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 import Time "mo:core/Time";
-import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
-  let accessControlState = AccessControl.initState();
-  include MixinAuthorization(accessControlState);
+  public type FamilyMember = {
+    #marina;
+    #nik;
+    #mariana;
+  };
 
   public type UserProfile = {
     name : Text;
     familyMember : ?FamilyMember;
   };
 
-  type FamilyMember = {
-    #marina;
-    #nik;
-    #mariana;
-  };
-
-  type Message = {
+  public type Message = {
     id : Nat;
     sender : FamilyMember;
     content : Text;
-    timestamp : Time.Time;
+    timestamp : Int;
   };
 
   public type MessageInput = {
@@ -33,7 +29,6 @@ actor {
   };
 
   let userProfiles = Map.empty<Principal, UserProfile>();
-
   var messages : [Message] = [];
   var nextMessageId : Nat = 0;
 

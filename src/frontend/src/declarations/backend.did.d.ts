@@ -17,10 +17,8 @@ export interface Message {
   'id' : bigint,
   'content' : string,
   'sender' : FamilyMember,
-  'timestamp' : Time,
 }
 export interface MessageInput { 'content' : string, 'sender' : FamilyMember }
-export type Time = bigint;
 export interface UserProfile {
   'name' : string,
   'familyMember' : [] | [FamilyMember],

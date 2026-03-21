@@ -18,12 +18,10 @@ export const FamilyMember = IDL.Variant({
   'mariana' : IDL.Null,
   'marina' : IDL.Null,
 });
-export const Time = IDL.Int;
 export const Message = IDL.Record({
   'id' : IDL.Nat,
   'content' : IDL.Text,
   'sender' : FamilyMember,
-  'timestamp' : Time,
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
@@ -63,12 +61,10 @@ export const idlFactory = ({ IDL }) => {
     'mariana' : IDL.Null,
     'marina' : IDL.Null,
   });
-  const Time = IDL.Int;
   const Message = IDL.Record({
     'id' : IDL.Nat,
     'content' : IDL.Text,
     'sender' : FamilyMember,
-    'timestamp' : Time,
   });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,

@@ -1,26 +1,20 @@
 # Family Messenger
 
 ## Current State
-New project. No existing application files.
+Backend includes MixinAuthorization which can block unauthenticated calls. The app uses name selection instead of Internet Identity login, so the authorization component is unnecessary and causes "Failed to send message" errors.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Family messenger app for 3 members: Marina (Mom), Nik (Dad), Mariana (Daughter)
-- Login/member selection screen to choose who you are
-- Group chat room where all 3 can send and read messages
-- Messages display sender name, timestamp, and colored bubble per member
-- Member list sidebar showing online status
+- Nothing new
 
 ### Modify
-- N/A
+- Remove authorization mixin from backend; keep sendMessage, getAllMessages, saveCallerUserProfile, getCallerUserProfile, getUserProfile as plain public functions
 
 ### Remove
-- N/A
+- Authorization component and all role-based imports from backend
 
 ## Implementation Plan
-1. Backend: store messages with sender, text, timestamp; get all messages; post message
-2. Backend: store/retrieve member presence
-3. Frontend: member selection screen (pick Marina, Nik, or Mariana)
-4. Frontend: main chat layout - left sidebar (family members), center chat panel with bubbles, message composer
-5. Messages auto-refresh every few seconds
+1. Regenerate backend without authorization component
+2. Update frontend bindings
+3. Deploy
