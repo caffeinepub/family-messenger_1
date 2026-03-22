@@ -50,26 +50,33 @@ const MEMBER_CONFIG: Record<
 
 const STORAGE_KEY = "familyMessengerMember";
 const NIK_PASSWORD = "Fart";
+const MARIANA_PASSWORD = "2407201603";
 
-// Password modal for Nik
-function NikPasswordModal({
+// Password modal (generic)
+function PasswordModal({
+  member,
   onConfirm,
   onCancel,
 }: {
+  member: FamilyMember;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const config = MEMBER_CONFIG[member];
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  const correctPassword =
+    member === FamilyMember.nik ? NIK_PASSWORD : MARIANA_PASSWORD;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === NIK_PASSWORD) {
+    if (password === correctPassword) {
       onConfirm();
     } else {
       setError("Wrong password");
@@ -80,8 +87,8 @@ function NikPasswordModal({
 
   return (
     <motion.div
-      key="nik-pw-backdrop"
-      data-ocid="nik_password.modal"
+      key="pw-backdrop"
+      data-ocid={`${member}_password.modal`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -110,24 +117,24 @@ function NikPasswordModal({
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                background: "oklch(0.79 0.12 65)",
-                color: "oklch(0.20 0.01 250)",
+                background: config.color,
+                color: config.textColor,
               }}
             >
               <Lock className="w-5 h-5" />
             </div>
             <div>
               <h2 className="font-bold text-foreground text-base leading-tight">
-                Enter Dad's password
+                Enter {config.role}'s password
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                To log in as Nik
+                To log in as {config.name}
               </p>
             </div>
           </div>
           <button
             type="button"
-            data-ocid="nik_password.close_button"
+            data-ocid={`${member}_password.close_button`}
             onClick={onCancel}
             className="p-1 rounded-lg hover:bg-black/10 transition-colors mt-0.5"
             aria-label="Cancel"
@@ -141,7 +148,7 @@ function NikPasswordModal({
           <div className="flex flex-col gap-1.5">
             <Input
               ref={inputRef}
-              data-ocid="nik_password.input"
+              data-ocid={`${member}_password.input`}
               type="password"
               value={password}
               onChange={(e) => {
@@ -156,7 +163,7 @@ function NikPasswordModal({
               {error && (
                 <motion.p
                   key="pw-error"
-                  data-ocid="nik_password.error_state"
+                  data-ocid={`${member}_password.error_state`}
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
@@ -172,7 +179,7 @@ function NikPasswordModal({
           <div className="flex gap-2 pt-1">
             <Button
               type="button"
-              data-ocid="nik_password.cancel_button"
+              data-ocid={`${member}_password.cancel_button`}
               variant="outline"
               className="flex-1 rounded-xl min-h-[44px]"
               onClick={onCancel}
@@ -181,11 +188,11 @@ function NikPasswordModal({
             </Button>
             <Button
               type="submit"
-              data-ocid="nik_password.submit_button"
+              data-ocid={`${member}_password.submit_button`}
               className="flex-1 rounded-xl min-h-[44px]"
               style={{
-                background: "oklch(0.79 0.12 65)",
-                color: "oklch(0.20 0.01 250)",
+                background: config.color,
+                color: config.textColor,
               }}
             >
               Enter
@@ -200,15 +207,18 @@ function NikPasswordModal({
 function MemberSelectScreen({
   onSelect,
 }: { onSelect: (m: FamilyMember) => void }) {
-  const [showNikModal, setShowNikModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] =
+    useState<FamilyMember | null>(null);
   const members = Object.entries(MEMBER_CONFIG) as [
     FamilyMember,
     (typeof MEMBER_CONFIG)[FamilyMember],
   ][];
 
+  const PROTECTED = [FamilyMember.nik, FamilyMember.mariana];
+
   const handleMemberClick = (key: FamilyMember) => {
-    if (key === FamilyMember.nik) {
-      setShowNikModal(true);
+    if (PROTECTED.includes(key)) {
+      setShowPasswordModal(key);
     } else {
       onSelect(key);
     }
@@ -258,7 +268,7 @@ function MemberSelectScreen({
               style={{ background: config.color, color: config.textColor }}
             >
               {config.initials}
-              {key === FamilyMember.nik && (
+              {PROTECTED.includes(key) && (
                 <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center bg-card border border-border shadow-sm">
                   <Lock className="w-3 h-3 text-muted-foreground" />
                 </span>
@@ -274,15 +284,17 @@ function MemberSelectScreen({
         ))}
       </div>
 
-      {/* Nik password modal */}
+      {/* Password modal */}
       <AnimatePresence>
-        {showNikModal && (
-          <NikPasswordModal
+        {showPasswordModal && (
+          <PasswordModal
+            member={showPasswordModal}
             onConfirm={() => {
-              setShowNikModal(false);
-              onSelect(FamilyMember.nik);
+              const m = showPasswordModal;
+              setShowPasswordModal(null);
+              onSelect(m);
             }}
-            onCancel={() => setShowNikModal(false)}
+            onCancel={() => setShowPasswordModal(null)}
           />
         )}
       </AnimatePresence>
