@@ -93,6 +93,7 @@ export interface Message {
     id: bigint;
     content: string;
     sender: FamilyMember;
+    timestamp: bigint;
 }
 export interface MessageInput {
     content: string;
@@ -115,6 +116,7 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteMessage(id: bigint): Promise<boolean>;
     getAllMessages(): Promise<Array<Message>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -151,6 +153,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n1(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async deleteMessage(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteMessage(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteMessage(arg0);
             return result;
         }
     }
@@ -287,15 +303,18 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
     id: bigint;
     content: string;
     sender: _FamilyMember;
+    timestamp: bigint;
 }): {
     id: bigint;
     content: string;
     sender: FamilyMember;
+    timestamp: bigint;
 } {
     return {
         id: value.id,
         content: value.content,
-        sender: from_candid_FamilyMember_n6(_uploadFile, _downloadFile, value.sender)
+        sender: from_candid_FamilyMember_n6(_uploadFile, _downloadFile, value.sender),
+        timestamp: value.timestamp
     };
 }
 function from_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

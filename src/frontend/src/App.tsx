@@ -2,12 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Heart, LogOut, Send, Users, X } from "lucide-react";
+import { Heart, Lock, LogOut, Send, Trash2, Users, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FamilyMember } from "./backend";
-import { useGetAllMessages, useSendMessage } from "./hooks/useQueries";
+import {
+  useDeleteMessage,
+  useGetAllMessages,
+  useSendMessage,
+} from "./hooks/useQueries";
 
 const queryClient = new QueryClient();
 
@@ -45,14 +49,171 @@ const MEMBER_CONFIG: Record<
 };
 
 const STORAGE_KEY = "familyMessengerMember";
+const NIK_PASSWORD = "Fart";
+
+// Password modal for Nik
+function NikPasswordModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === NIK_PASSWORD) {
+      onConfirm();
+    } else {
+      setError("Wrong password");
+      setPassword("");
+      inputRef.current?.focus();
+    }
+  };
+
+  return (
+    <motion.div
+      key="nik-pw-backdrop"
+      data-ocid="nik_password.modal"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 flex items-center justify-center px-4"
+      style={{ zIndex: 100, background: "rgba(0,0,0,0.45)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.93, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 16 }}
+        transition={{
+          duration: 0.25,
+          type: "spring",
+          stiffness: 320,
+          damping: 26,
+        }}
+        className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-sm p-6 flex flex-col gap-5"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{
+                background: "oklch(0.79 0.12 65)",
+                color: "oklch(0.20 0.01 250)",
+              }}
+            >
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-bold text-foreground text-base leading-tight">
+                Enter Dad's password
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                To log in as Nik
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            data-ocid="nik_password.close_button"
+            onClick={onCancel}
+            className="p-1 rounded-lg hover:bg-black/10 transition-colors mt-0.5"
+            aria-label="Cancel"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Input
+              ref={inputRef}
+              data-ocid="nik_password.input"
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
+              placeholder="Password"
+              className="rounded-xl text-[16px] min-h-[44px]"
+              autoComplete="current-password"
+            />
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  key="pw-error"
+                  data-ocid="nik_password.error_state"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-xs text-red-500 ml-1"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <Button
+              type="button"
+              data-ocid="nik_password.cancel_button"
+              variant="outline"
+              className="flex-1 rounded-xl min-h-[44px]"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              data-ocid="nik_password.submit_button"
+              className="flex-1 rounded-xl min-h-[44px]"
+              style={{
+                background: "oklch(0.79 0.12 65)",
+                color: "oklch(0.20 0.01 250)",
+              }}
+            >
+              Enter
+            </Button>
+          </div>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 function MemberSelectScreen({
   onSelect,
 }: { onSelect: (m: FamilyMember) => void }) {
+  const [showNikModal, setShowNikModal] = useState(false);
   const members = Object.entries(MEMBER_CONFIG) as [
     FamilyMember,
     (typeof MEMBER_CONFIG)[FamilyMember],
   ][];
+
+  const handleMemberClick = (key: FamilyMember) => {
+    if (key === FamilyMember.nik) {
+      setShowNikModal(true);
+    } else {
+      onSelect(key);
+    }
+  };
+
   return (
     <div
       className="flex flex-col items-center justify-center p-6"
@@ -88,15 +249,20 @@ function MemberSelectScreen({
             transition={{ duration: 0.4, delay: i * 0.1 }}
             whileHover={{ scale: 1.04, y: -4 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => onSelect(key)}
+            onClick={() => handleMemberClick(key)}
             className="bg-card rounded-2xl shadow-card border border-border p-7 flex flex-col items-center gap-4 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{ minHeight: "44px" }}
           >
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shadow-md"
+              className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shadow-md relative"
               style={{ background: config.color, color: config.textColor }}
             >
               {config.initials}
+              {key === FamilyMember.nik && (
+                <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center bg-card border border-border shadow-sm">
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                </span>
+              )}
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">
@@ -107,6 +273,19 @@ function MemberSelectScreen({
           </motion.button>
         ))}
       </div>
+
+      {/* Nik password modal */}
+      <AnimatePresence>
+        {showNikModal && (
+          <NikPasswordModal
+            onConfirm={() => {
+              setShowNikModal(false);
+              onSelect(FamilyMember.nik);
+            }}
+            onCancel={() => setShowNikModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -220,8 +399,10 @@ function ChatApp({
 }: { currentMember: FamilyMember; onSwitch: () => void }) {
   const [text, setText] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const { data: messages = [], isLoading } = useGetAllMessages();
   const sendMessage = useSendMessage();
+  const deleteMessage = useDeleteMessage();
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(0);
@@ -244,6 +425,14 @@ function ChatApp({
       });
     } catch {
       toast.error("Failed to send message");
+    }
+  };
+
+  const handleDelete = async (id: bigint) => {
+    try {
+      await deleteMessage.mutateAsync(id);
+    } catch {
+      toast.error("Failed to delete message");
     }
   };
 
@@ -405,16 +594,25 @@ function ChatApp({
                 {messages.map((msg, idx) => {
                   const cfg = MEMBER_CONFIG[msg.sender];
                   const isOwn = msg.sender === currentMember;
+                  const msgId = String(msg.id);
+                  const isHovered = hoveredId === msgId;
+                  const isDeleting =
+                    deleteMessage.isPending &&
+                    deleteMessage.variables === msg.id;
+
                   return (
                     <motion.div
-                      key={String(msg.id)}
+                      key={msgId}
                       data-ocid={`chat.item.${idx + 1}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -4 }}
                       transition={{ duration: 0.25 }}
-                      className={`flex items-end gap-2 ${
+                      className={`flex items-end gap-2 group ${
                         isOwn ? "flex-row-reverse" : "flex-row"
                       }`}
+                      onMouseEnter={() => setHoveredId(msgId)}
+                      onMouseLeave={() => setHoveredId(null)}
                     >
                       {!isOwn && (
                         <div
@@ -427,6 +625,7 @@ function ChatApp({
                           {cfg.initials}
                         </div>
                       )}
+
                       <div
                         className={`flex flex-col max-w-[75%] md:max-w-[68%] ${
                           isOwn ? "items-end" : "items-start"
@@ -444,14 +643,52 @@ function ChatApp({
                             color: cfg.textColor,
                             borderBottomRightRadius: isOwn ? "4px" : "16px",
                             borderBottomLeftRadius: isOwn ? "16px" : "4px",
+                            opacity: isDeleting ? 0.5 : 1,
+                            transition: "opacity 0.2s",
                           }}
                         >
                           {msg.content}
                         </div>
-                        <span className="text-xs text-muted-foreground mt-1 mx-1">
-                          {formatTime((msg as any).timestamp)}
-                        </span>
+
+                        {/* Timestamp + delete row */}
+                        <div
+                          className={`flex items-center gap-1 mt-1 mx-1 ${
+                            isOwn ? "flex-row-reverse" : "flex-row"
+                          }`}
+                        >
+                          <span className="text-xs text-muted-foreground">
+                            {formatTime((msg as any).timestamp)}
+                          </span>
+
+                          {/* Delete button: always visible on touch, hover-reveal on desktop */}
+                          <motion.button
+                            type="button"
+                            data-ocid={`chat.delete_button.${idx + 1}`}
+                            onClick={() => handleDelete(msg.id)}
+                            disabled={isDeleting}
+                            aria-label="Delete message"
+                            initial={false}
+                            animate={{
+                              opacity: isHovered ? 1 : 0,
+                              scale: isHovered ? 1 : 0.8,
+                            }}
+                            transition={{ duration: 0.15 }}
+                            className="
+                              p-1 rounded-md
+                              text-muted-foreground hover:text-red-500
+                              hover:bg-red-50 dark:hover:bg-red-950/30
+                              transition-colors
+                              focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-400
+                              md:pointer-events-auto
+                              [@media(hover:none)]:opacity-100 [@media(hover:none)]:scale-100
+                            "
+                            style={{ minWidth: "24px", minHeight: "24px" }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </motion.button>
+                        </div>
                       </div>
+
                       {isOwn && (
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mb-0.5"

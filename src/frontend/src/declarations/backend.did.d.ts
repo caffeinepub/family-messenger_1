@@ -17,6 +17,7 @@ export interface Message {
   'id' : bigint,
   'content' : string,
   'sender' : FamilyMember,
+  'timestamp' : bigint,
 }
 export interface MessageInput { 'content' : string, 'sender' : FamilyMember }
 export interface UserProfile {
@@ -29,6 +30,7 @@ export type UserRole = { 'admin' : null } |
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteMessage' : ActorMethod<[bigint], boolean>,
   'getAllMessages' : ActorMethod<[], Array<Message>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,

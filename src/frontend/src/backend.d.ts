@@ -7,12 +7,11 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export type Time = bigint;
 export interface Message {
     id: bigint;
     content: string;
     sender: FamilyMember;
-    timestamp: Time;
+    timestamp: bigint;
 }
 export interface MessageInput {
     content: string;
@@ -27,10 +26,19 @@ export enum FamilyMember {
     mariana = "mariana",
     marina = "marina"
 }
+export enum UserRole {
+    admin = "admin",
+    user = "user",
+    guest = "guest"
+}
 export interface backendInterface {
+    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteMessage(id: bigint): Promise<boolean>;
     getAllMessages(): Promise<Array<Message>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
+    getCallerUserRole(): Promise<UserRole>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     sendMessage(messageInput: MessageInput): Promise<void>;
 }

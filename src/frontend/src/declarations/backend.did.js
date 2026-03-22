@@ -22,6 +22,7 @@ export const Message = IDL.Record({
   'id' : IDL.Nat,
   'content' : IDL.Text,
   'sender' : FamilyMember,
+  'timestamp' : IDL.Int,
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
@@ -35,6 +36,7 @@ export const MessageInput = IDL.Record({
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteMessage' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'getAllMessages' : IDL.Func([], [IDL.Vec(Message)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
@@ -65,6 +67,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'content' : IDL.Text,
     'sender' : FamilyMember,
+    'timestamp' : IDL.Int,
   });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
@@ -78,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteMessage' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'getAllMessages' : IDL.Func([], [IDL.Vec(Message)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
